@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "dgSpecHash": "rjWnbAPXM8g=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\alex\\Desktop\\Fr\\FastReport\\Tools\\ConsoleApp1\\ConsoleApp1.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\alex\\.nuget\\packages\\documentformat.openxml\\3.3.0\\documentformat.openxml.3.3.0.nupkg.sha512",
+    "C:\\Users\\alex\\.nuget\\packages\\documentformat.openxml.framework\\3.3.0\\documentformat.openxml.framework.3.3.0.nupkg.sha512",
+    "C:\\Users\\alex\\.nuget\\packages\\microsoft.codeanalysis.analyzers\\3.3.2\\microsoft.codeanalysis.analyzers.3.3.2.nupkg.sha512",
+    "C:\\Users\\alex\\.nuget\\packages\\microsoft.codeanalysis.common\\4.0.1\\microsoft.codeanalysis.common.4.0.1.nupkg.sha512",
+    "C:\\Users\\alex\\.nuget\\packages\\microsoft.codeanalysis.csharp\\4.0.1\\microsoft.codeanalysis.csharp.4.0.1.nupkg.sha512",
+    "C:\\Users\\alex\\.nuget\\packages\\microsoft.codeanalysis.visualbasic\\4.0.1\\microsoft.codeanalysis.visualbasic.4.0.1.nupkg.sha512",
+    "C:\\Users\\alex\\.nuget\\packages\\microsoft.netcore.platforms\\3.1.9\\microsoft.netcore.platforms.3.1.9.nupkg.sha512",
+    "C:\\Users\\alex\\.nuget\\packages\\microsoft.win32.systemevents\\4.7.0\\microsoft.win32.systemevents.4.7.0.nupkg.sha512",
+    "C:\\Users\\alex\\.nuget\\packages\\system.drawing.common\\4.7.3\\system.drawing.common.4.7.3.nupkg.sha512",
+    "C:\\Users\\alex\\.nuget\\packages\\system.io.packaging\\8.0.1\\system.io.packaging.8.0.1.nupkg.sha512"
+  ],
+  "logs": []
+}
