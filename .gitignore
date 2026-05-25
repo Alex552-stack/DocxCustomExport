@@ -1,2 +1,27 @@
 ManualInspectionOutput/
 .idea/
+
+# .NET build output
+[Bb]in/
+[Oo]bj/
+**/[Bb]in/
+**/[Oo]bj/
+
+# IDE/user-local files
+.vs/
+*.user
+*.suo
+*.DotSettings.user
+
+# Test and coverage output
+[Tt]est[Rr]esult*/
+TestResults/
+*.trx
+coverage/
+*.coverage
+*.coveragexml
+
+# Packages and generated logs
+*.nupkg
+*.snupkg
+*.log

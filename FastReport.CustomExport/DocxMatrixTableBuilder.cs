@@ -301,6 +301,31 @@ internal static class DocxMatrixTableBuilder
             });
         }
 
+        if (style.PaddingLeft > 0 || style.PaddingTop > 0 || style.PaddingRight > 0 || style.PaddingBottom > 0)
+        {
+            properties.Append(new TableCellMargin(
+                new TopMargin
+                {
+                    Width = ToTwips(style.PaddingTop).ToString(),
+                    Type = TableWidthUnitValues.Dxa
+                },
+                new LeftMargin
+                {
+                    Width = ToTwips(style.PaddingLeft).ToString(),
+                    Type = TableWidthUnitValues.Dxa
+                },
+                new BottomMargin
+                {
+                    Width = ToTwips(style.PaddingBottom).ToString(),
+                    Type = TableWidthUnitValues.Dxa
+                },
+                new RightMargin
+                {
+                    Width = ToTwips(style.PaddingRight).ToString(),
+                    Type = TableWidthUnitValues.Dxa
+                }));
+        }
+
         if (style.VertAlign != VertAlign.Top)
         {
             properties.Append(new TableCellVerticalAlignment
@@ -335,17 +360,7 @@ internal static class DocxMatrixTableBuilder
         {
             properties.Append(new Indentation
             {
-                Left = ToTwips(source.Style.PaddingLeft).ToString(),
-                Right = ToTwips(source.Style.PaddingRight).ToString(),
                 FirstLine = ToTwips(source.Style.ParagraphOffset).ToString()
-            });
-        }
-        else if (source.Style.PaddingLeft > 0 || source.Style.PaddingRight > 0)
-        {
-            properties.Append(new Indentation
-            {
-                Left = ToTwips(source.Style.PaddingLeft).ToString(),
-                Right = ToTwips(source.Style.PaddingRight).ToString()
             });
         }
 
