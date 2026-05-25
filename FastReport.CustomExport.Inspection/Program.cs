@@ -9,24 +9,21 @@ internal static class Program
     public static async Task<int> Main(string[] args)
     {
         InspectionOptions options = InspectionOptions.Parse(args);
-        string reportsRoot = Path.Combine(AppContext.BaseDirectory, "TestReports", "Reports");
+        string testReportsRoot = Path.Combine(AppContext.BaseDirectory, "TestReports");
         string outputRoot = options.ResolveOutputRoot();
 
-        if (!Directory.Exists(reportsRoot))
+        if (!Directory.Exists(testReportsRoot))
         {
-            Console.Error.WriteLine($"Reports folder not found: {reportsRoot}");
+            Console.Error.WriteLine($"Test reports folder not found: {testReportsRoot}");
             return 1;
         }
-        
 
-        List<string> reports = Directory.GetFiles(reportsRoot, "*.frx", SearchOption.AllDirectories)
-            .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
-            .ToList();
+        List<InspectionReportInput> reports = GetReportInputs(testReportsRoot);
 
         if (!string.IsNullOrWhiteSpace(options.Filter))
         {
             reports = reports
-                .Where(path => path.Contains(options.Filter, StringComparison.OrdinalIgnoreCase))
+                .Where(report => report.RelativeName.Contains(options.Filter, StringComparison.OrdinalIgnoreCase))
                 .ToList();
         }
 
@@ -35,12 +32,12 @@ internal static class Program
 
         if (reports.Count == 0)
         {
-            Console.WriteLine("No FRX reports matched the requested filters.");
+            Console.WriteLine("No FRX or FPX reports matched the requested filters.");
             return 0;
         }
 
         Directory.CreateDirectory(outputRoot);
-        Console.WriteLine($"Exporting {reports.Count} FRX reports to: {outputRoot}");
+        Console.WriteLine($"Exporting {reports.Count} FRX/FPX reports to: {outputRoot}");
         Console.WriteLine($"Parallelism: {options.Parallelism}");
 
         ConcurrentBag<InspectionExportResult> results = new ConcurrentBag<InspectionExportResult>();
@@ -49,9 +46,9 @@ internal static class Program
             MaxDegreeOfParallelism = options.Parallelism
         };
 
-        await Parallel.ForEachAsync(reports, parallelOptions, (reportPath, cancellationToken) =>
+        await Parallel.ForEachAsync(reports, parallelOptions, (report, cancellationToken) =>
         {
-            InspectionExportResult result = ExportPair(reportPath, reportsRoot, outputRoot);
+            InspectionExportResult result = ExportPair(report, outputRoot);
             results.Add(result);
 
             string status = result.Success ? "OK" : "FAIL";
@@ -75,28 +72,54 @@ internal static class Program
         return failureCount == 0 ? 0 : 2;
     }
 
-    private static InspectionExportResult ExportPair(string reportPath, string reportsRoot, string outputRoot)
+    private static List<InspectionReportInput> GetReportInputs(string testReportsRoot)
     {
-        string relativePath = Path.GetRelativePath(reportsRoot, reportPath);
-        string relativeDirectory = Path.GetDirectoryName(relativePath) ?? string.Empty;
-        string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(relativePath);
+        List<InspectionReportInput> reports = new List<InspectionReportInput>();
+        string frxRoot = Path.Combine(testReportsRoot, "Reports");
+
+        if (Directory.Exists(frxRoot))
+        {
+            reports.AddRange(Directory.GetFiles(frxRoot, "*.frx", SearchOption.AllDirectories)
+                .Select(path => InspectionReportInput.Create(path, frxRoot, InspectionReportKind.Frx)));
+        }
+
+        reports.AddRange(Directory.GetFiles(testReportsRoot, "*.fpx", SearchOption.AllDirectories)
+            .Select(path => InspectionReportInput.Create(path, testReportsRoot, InspectionReportKind.Fpx)));
+
+        return reports
+            .OrderBy(report => report.RelativeName, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static InspectionExportResult ExportPair(InspectionReportInput reportInput, string outputRoot)
+    {
+        string relativeDirectory = Path.GetDirectoryName(reportInput.RelativeName) ?? string.Empty;
+        string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(reportInput.RelativeName);
 
         Stopwatch stopwatch = Stopwatch.StartNew();
 
         try
         {
             string pairDirectory = GetPairDirectory(outputRoot, "successful", relativeDirectory, fileNameWithoutExtension);
-            string sourceFrxPath = Path.Combine(pairDirectory, $"{fileNameWithoutExtension}.source.frx");
+            string sourcePath = Path.Combine(pairDirectory, $"{fileNameWithoutExtension}.source{reportInput.Extension}");
             string fpxPath = Path.Combine(pairDirectory, $"{fileNameWithoutExtension}.fpx");
             string docxPath = Path.Combine(pairDirectory, $"{fileNameWithoutExtension}.docx");
 
             Directory.CreateDirectory(pairDirectory);
-            File.Copy(reportPath, sourceFrxPath, true);
+            File.Copy(reportInput.Path, sourcePath, true);
 
             using Report report = new Report();
-            report.Load(reportPath);
-            report.Prepare();
-            report.SavePrepared(fpxPath);
+            if (reportInput.Kind == InspectionReportKind.Frx)
+            {
+                report.Load(reportInput.Path);
+                report.Prepare();
+                report.SavePrepared(fpxPath);
+            }
+            else
+            {
+                report.LoadPrepared(reportInput.Path);
+                File.Copy(reportInput.Path, fpxPath, true);
+            }
 
             using FileStream docxStream = File.Create(docxPath);
             using DocxExport export = new DocxExport();
@@ -106,8 +129,8 @@ internal static class Program
 
             return new InspectionExportResult
             {
-                RelativeName = relativePath,
-                SourceFrxPath = sourceFrxPath,
+                RelativeName = reportInput.RelativeName,
+                SourcePath = sourcePath,
                 FpxPath = fpxPath,
                 DocxPath = docxPath,
                 Success = true,
@@ -118,18 +141,26 @@ internal static class Program
         {
             stopwatch.Stop();
 
+            string successfulPairDirectory = GetPairDirectory(outputRoot, "successful", relativeDirectory, fileNameWithoutExtension);
+            string successfulFpxPath = Path.Combine(successfulPairDirectory, $"{fileNameWithoutExtension}.fpx");
             string pairDirectory = GetPairDirectory(outputRoot, "failed", relativeDirectory, fileNameWithoutExtension);
-            string sourceFrxPath = Path.Combine(pairDirectory, $"{fileNameWithoutExtension}.source.frx");
+            string sourcePath = Path.Combine(pairDirectory, $"{fileNameWithoutExtension}.source{reportInput.Extension}");
             string fpxPath = Path.Combine(pairDirectory, $"{fileNameWithoutExtension}.fpx");
             string docxPath = Path.Combine(pairDirectory, $"{fileNameWithoutExtension}.docx");
 
             Directory.CreateDirectory(pairDirectory);
-            File.Copy(reportPath, sourceFrxPath, true);
+            File.Copy(reportInput.Path, sourcePath, true);
+            if (File.Exists(successfulFpxPath))
+                File.Copy(successfulFpxPath, fpxPath, true);
+            else if (reportInput.Kind == InspectionReportKind.Fpx)
+                File.Copy(reportInput.Path, fpxPath, true);
+
+            DeleteDirectoryIfExists(successfulPairDirectory);
 
             return new InspectionExportResult
             {
-                RelativeName = relativePath,
-                SourceFrxPath = sourceFrxPath,
+                RelativeName = reportInput.RelativeName,
+                SourcePath = sourcePath,
                 FpxPath = fpxPath,
                 DocxPath = docxPath,
                 Success = false,
@@ -137,6 +168,12 @@ internal static class Program
                 Error = ex.ToString()
             };
         }
+    }
+
+    private static void DeleteDirectoryIfExists(string path)
+    {
+        if (Directory.Exists(path))
+            Directory.Delete(path, true);
     }
 
     private static string GetPairDirectory(string outputRoot, string bucket, string relativeDirectory, string fileNameWithoutExtension)
@@ -147,7 +184,7 @@ internal static class Program
     private static void WriteSummary(string summaryPath, IReadOnlyList<InspectionExportResult> results)
     {
         using StreamWriter writer = new StreamWriter(summaryPath, false);
-        writer.WriteLine("RelativeName,Success,DurationMs,SourceFrxPath,FpxPath,DocxPath,Error");
+        writer.WriteLine("RelativeName,Success,DurationMs,SourcePath,FpxPath,DocxPath,Error");
 
         foreach (InspectionExportResult result in results)
         {
@@ -155,7 +192,7 @@ internal static class Program
                 Csv(result.RelativeName),
                 result.Success ? "true" : "false",
                 result.DurationMs.ToString(),
-                Csv(result.SourceFrxPath),
+                Csv(result.SourcePath),
                 Csv(result.FpxPath),
                 Csv(result.DocxPath),
                 Csv(result.Error ?? string.Empty)));
@@ -166,6 +203,34 @@ internal static class Program
     {
         string escaped = value.Replace("\"", "\"\"");
         return $"\"{escaped}\"";
+    }
+}
+
+internal enum InspectionReportKind
+{
+    Frx,
+    Fpx
+}
+
+internal sealed class InspectionReportInput
+{
+    public string Path { get; init; } = string.Empty;
+
+    public string RelativeName { get; init; } = string.Empty;
+
+    public string Extension { get; init; } = string.Empty;
+
+    public InspectionReportKind Kind { get; init; }
+
+    public static InspectionReportInput Create(string path, string root, InspectionReportKind kind)
+    {
+        return new InspectionReportInput
+        {
+            Path = path,
+            RelativeName = System.IO.Path.GetRelativePath(root, path),
+            Extension = System.IO.Path.GetExtension(path),
+            Kind = kind
+        };
     }
 }
 
@@ -257,7 +322,7 @@ internal sealed class InspectionExportResult
 {
     public string RelativeName { get; init; } = string.Empty;
 
-    public string SourceFrxPath { get; init; } = string.Empty;
+    public string SourcePath { get; init; } = string.Empty;
 
     public string FpxPath { get; init; } = string.Empty;
 

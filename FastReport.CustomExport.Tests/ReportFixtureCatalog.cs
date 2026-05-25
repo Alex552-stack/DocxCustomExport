@@ -21,6 +21,16 @@ internal static class ReportFixtureCatalog
         return reports;
     }
 
+    public static IReadOnlyList<string> GetLocalPreparedReports()
+    {
+        if (!Directory.Exists(Root))
+            return new List<string>();
+
+        return Directory.GetFiles(Root, "*.fpx", SearchOption.TopDirectoryOnly)
+            .OrderBy(file => file)
+            .ToList();
+    }
+
     public static string GetPath(params string[] parts)
     {
         return Path.Combine(new[] { Root }.Concat(parts).ToArray());

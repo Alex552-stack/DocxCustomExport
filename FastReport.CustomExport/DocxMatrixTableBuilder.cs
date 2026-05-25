@@ -40,7 +40,7 @@ internal static class DocxMatrixTableBuilder
             row.Append(new TableRowProperties(
                 new TableRowHeight
                 {
-                    Val = (UInt32)ToTwips(page.YEdges[rowIndex + 1] - page.YEdges[rowIndex]),
+                    Val = (UInt32)Math.Min(31680, ToTwips(page.YEdges[rowIndex + 1] - page.YEdges[rowIndex])),
                     HeightType = HeightRuleValues.Exact
                 }));
 
@@ -118,13 +118,14 @@ internal static class DocxMatrixTableBuilder
         DocxMatrixObject source = page.Objects[origin.ObjectIndex];
         TableCell cell = new();
         TableCellProperties properties = CreateCellProperties(page, origin.Column, origin.ColumnSpan);
-        ApplyStyle(properties, source.Style);
 
         if (origin.ColumnSpan > 1)
             properties.Append(new GridSpan { Val = origin.ColumnSpan });
 
         if (origin.RowSpan > 1)
             properties.Append(new VerticalMerge { Val = MergedCellValues.Restart });
+
+        ApplyStyle(properties, source.Style);
 
         cell.Append(properties);
 
@@ -171,66 +172,67 @@ internal static class DocxMatrixTableBuilder
             imagePart.FeedData(stream);
 
         string relationshipId = owningPart.GetIdOfPart(imagePart);
-        Run run = new(new DrawingWordprocessing.Inline(
-            new DrawingWordprocessing.Extent
-            {
-                Cx = DocxUnitConverter.PixelsToEmus(Math.Max(1, source.ImageWidth)),
-                Cy = DocxUnitConverter.PixelsToEmus(Math.Max(1, source.ImageHeight))
-            },
-            new DrawingWordprocessing.EffectExtent
-            {
-                LeftEdge = 0L,
-                TopEdge = 0L,
-                RightEdge = 0L,
-                BottomEdge = 0L
-            },
-            new DrawingWordprocessing.DocProperties
-            {
-                Id = (UInt32)Interlocked.Increment(ref nextDrawingId),
-                Name = string.IsNullOrWhiteSpace(source.Name) ? "Picture" : source.Name
-            },
-            new DrawingWordprocessing.NonVisualGraphicFrameDrawingProperties(
-                new A.GraphicFrameLocks
+        Run run = new(new DocumentFormat.OpenXml.Wordprocessing.Drawing(
+            new DrawingWordprocessing.Inline(
+                new DrawingWordprocessing.Extent
                 {
-                    NoChangeAspect = true
-                }),
-            new A.Graphic(
-                new A.GraphicData(
-                    new Pic.Picture(
-                        new Pic.NonVisualPictureProperties(
-                            new Pic.NonVisualDrawingProperties
-                            {
-                                Id = 0U,
-                                Name = string.IsNullOrWhiteSpace(source.Name) ? "Picture.png" : $"{source.Name}.png"
-                            },
-                            new Pic.NonVisualPictureDrawingProperties()),
-                        new Pic.BlipFill(
-                            new A.Blip
-                            {
-                                Embed = relationshipId
-                            },
-                            new A.Stretch(new A.FillRectangle())),
-                        new Pic.ShapeProperties(
-                            new A.Transform2D(
-                                new A.Offset { X = 0L, Y = 0L },
-                                new A.Extents
+                    Cx = DocxUnitConverter.PixelsToEmus(Math.Max(1, source.ImageWidth)),
+                    Cy = DocxUnitConverter.PixelsToEmus(Math.Max(1, source.ImageHeight))
+                },
+                new DrawingWordprocessing.EffectExtent
+                {
+                    LeftEdge = 0L,
+                    TopEdge = 0L,
+                    RightEdge = 0L,
+                    BottomEdge = 0L
+                },
+                new DrawingWordprocessing.DocProperties
+                {
+                    Id = (UInt32)Interlocked.Increment(ref nextDrawingId),
+                    Name = string.IsNullOrWhiteSpace(source.Name) ? "Picture" : source.Name
+                },
+                new DrawingWordprocessing.NonVisualGraphicFrameDrawingProperties(
+                    new A.GraphicFrameLocks
+                    {
+                        NoChangeAspect = true
+                    }),
+                new A.Graphic(
+                    new A.GraphicData(
+                        new Pic.Picture(
+                            new Pic.NonVisualPictureProperties(
+                                new Pic.NonVisualDrawingProperties
                                 {
-                                    Cx = DocxUnitConverter.PixelsToEmus(Math.Max(1, source.ImageWidth)),
-                                    Cy = DocxUnitConverter.PixelsToEmus(Math.Max(1, source.ImageHeight))
-                                }),
-                            new A.PresetGeometry(new A.AdjustValueList())
-                            {
-                                Preset = A.ShapeTypeValues.Rectangle
-                            })))
-                {
-                    Uri = "http://schemas.openxmlformats.org/drawingml/2006/picture"
-                }))
-        {
-            DistanceFromTop = 0U,
-            DistanceFromBottom = 0U,
-            DistanceFromLeft = 0U,
-            DistanceFromRight = 0U
-        });
+                                    Id = 0U,
+                                    Name = string.IsNullOrWhiteSpace(source.Name) ? "Picture.png" : $"{source.Name}.png"
+                                },
+                                new Pic.NonVisualPictureDrawingProperties()),
+                            new Pic.BlipFill(
+                                new A.Blip
+                                {
+                                    Embed = relationshipId
+                                },
+                                new A.Stretch(new A.FillRectangle())),
+                            new Pic.ShapeProperties(
+                                new A.Transform2D(
+                                    new A.Offset { X = 0L, Y = 0L },
+                                    new A.Extents
+                                    {
+                                        Cx = DocxUnitConverter.PixelsToEmus(Math.Max(1, source.ImageWidth)),
+                                        Cy = DocxUnitConverter.PixelsToEmus(Math.Max(1, source.ImageHeight))
+                                    }),
+                                new A.PresetGeometry(new A.AdjustValueList())
+                                {
+                                    Preset = A.ShapeTypeValues.Rectangle
+                                })))
+                    {
+                        Uri = "http://schemas.openxmlformats.org/drawingml/2006/picture"
+                    }))
+            {
+                DistanceFromTop = 0U,
+                DistanceFromBottom = 0U,
+                DistanceFromLeft = 0U,
+                DistanceFromRight = 0U
+            }));
 
         paragraph.Append(run);
         return paragraph;
@@ -281,17 +283,13 @@ internal static class DocxMatrixTableBuilder
 
     private static void ApplyStyle(TableCellProperties properties, DocxMatrixStyle style)
     {
-        if (style.VertAlign != VertAlign.Top)
+        if (style.HasBorder)
         {
-            properties.Append(new TableCellVerticalAlignment
-            {
-                Val = style.VertAlign switch
-                {
-                    VertAlign.Center => TableVerticalAlignmentValues.Center,
-                    VertAlign.Bottom => TableVerticalAlignmentValues.Bottom,
-                    _ => TableVerticalAlignmentValues.Top
-                }
-            });
+            properties.Append(new TableCellBorders(
+                CreateBorder<TopBorder>(style.BorderColor),
+                CreateBorder<LeftBorder>(style.BorderColor),
+                CreateBorder<BottomBorder>(style.BorderColor),
+                CreateBorder<RightBorder>(style.BorderColor)));
         }
 
         if (style.HasFill)
@@ -303,13 +301,17 @@ internal static class DocxMatrixTableBuilder
             });
         }
 
-        if (style.HasBorder)
+        if (style.VertAlign != VertAlign.Top)
         {
-            properties.Append(new TableCellBorders(
-                CreateBorder<TopBorder>(style.BorderColor),
-                CreateBorder<LeftBorder>(style.BorderColor),
-                CreateBorder<BottomBorder>(style.BorderColor),
-                CreateBorder<RightBorder>(style.BorderColor)));
+            properties.Append(new TableCellVerticalAlignment
+            {
+                Val = style.VertAlign switch
+                {
+                    VertAlign.Center => TableVerticalAlignmentValues.Center,
+                    VertAlign.Bottom => TableVerticalAlignmentValues.Bottom,
+                    _ => TableVerticalAlignmentValues.Top
+                }
+            });
         }
     }
 
@@ -426,25 +428,25 @@ internal static class DocxMatrixTableBuilder
             });
         }
 
-        if (style.FontSizeInPoints > 0)
-        {
-            properties.Append(new FontSize
-            {
-                Val = ((int)Math.Round(style.FontSizeInPoints * 2, MidpointRounding.AwayFromZero)).ToString()
-            });
-        }
-
         if (style.Bold)
             properties.Append(new Bold());
 
         if (style.Italic)
             properties.Append(new Italic());
 
-        if (style.Underline)
-            properties.Append(new Underline { Val = UnderlineValues.Single });
-
         if (!string.IsNullOrEmpty(style.TextColor))
             properties.Append(new DocumentFormat.OpenXml.Wordprocessing.Color { Val = style.TextColor });
+
+        if (style.FontSizeInPoints > 0)
+        {
+            string halfPoints = ((int)Math.Round(style.FontSizeInPoints * 2, MidpointRounding.AwayFromZero)).ToString();
+            properties.Append(
+                new FontSize { Val = halfPoints },
+                new FontSizeComplexScript { Val = halfPoints });
+        }
+
+        if (style.Underline)
+            properties.Append(new Underline { Val = UnderlineValues.Single });
 
         return properties;
     }
@@ -452,12 +454,21 @@ internal static class DocxMatrixTableBuilder
     private static SpacingBetweenLines CreateSpacing(DocxMatrixStyle style)
     {
         int line = GetLineHeightTwips(style);
+        if (line <= 0)
+        {
+            return new SpacingBetweenLines
+            {
+                Before = "0",
+                After = "0"
+            };
+        }
+
         return new SpacingBetweenLines
         {
             Before = "0",
             After = "0",
-            Line = line > 0 ? line.ToString() : null,
-            LineRule = line > 0 ? LineSpacingRuleValues.Exact : null
+            Line = line.ToString(),
+            LineRule = LineSpacingRuleValues.Exact
         };
     }
 

@@ -40,4 +40,16 @@ internal static class PreparedReportFixtureCatalog
             .Where(fixture => fixture.Kind == ReportFixtureKind.Fpx)
             .Select(fixture => new object[] { fixture });
     }
+
+    public static IEnumerable<object[]> GetLocalPreparedFixturesAsTheoryData()
+    {
+        return ReportFixtureCatalog.GetLocalPreparedReports()
+            .Select(path => new PreparedReportFixtureInfo
+            {
+                Kind = ReportFixtureKind.Fpx,
+                Name = System.IO.Path.GetFileName(path),
+                Path = path
+            })
+            .Select(fixture => new object[] { fixture });
+    }
 }

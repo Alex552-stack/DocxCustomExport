@@ -429,12 +429,18 @@ internal static class DocxMatrixBuilder
         if (regionObjects.Count == 0)
             return regionObjects;
 
-        float originTop = region == DocxPageRegion.Body ? 0 : regionObjects.Min(x => x.Top);
-        if (originTop <= 0)
+        float minLeft = regionObjects.Min(x => x.Left);
+        float originLeft = minLeft < 0 ? minLeft : 0;
+        float minTop = regionObjects.Min(x => x.Top);
+        float originTop = region == DocxPageRegion.Body
+            ? (minTop < 0 ? minTop : 0)
+            : minTop;
+
+        if (originLeft == 0 && originTop == 0)
             return regionObjects;
 
         return regionObjects
-            .Select(item => CloneCollectedObject(item, item.Left, item.Top - originTop))
+            .Select(item => CloneCollectedObject(item, item.Left - originLeft, item.Top - originTop))
             .ToList();
     }
 

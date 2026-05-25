@@ -210,23 +210,23 @@ public class DocxExport : ExportBase
     {
         Paragraph paragraph = new(
             new ParagraphProperties(
-                new ParagraphMarkRunProperties(
-                    new Vanish(),
-                    new FontSize
-                    {
-                        Val = "1"
-                    },
-                    new FontSizeComplexScript
-                    {
-                        Val = "1"
-                    }),
                 new SpacingBetweenLines
                 {
                     Before = "0",
                     After = "0",
                     Line = "1",
                     LineRule = LineSpacingRuleValues.Exact
-                }));
+                },
+                new ParagraphMarkRunProperties(
+                    new Vanish(),
+                    new FontSize
+                    {
+                        Val = "2"
+                    },
+                    new FontSizeComplexScript
+                    {
+                        Val = "2"
+                    })));
 
         for (int pageIndex = 0; pageIndex < Report.PreparedPages.Count; pageIndex++)
         {
@@ -242,11 +242,11 @@ public class DocxExport : ExportBase
                         new Vanish(),
                         new FontSize
                         {
-                            Val = "1"
+                            Val = "2"
                         },
                         new FontSizeComplexScript
                         {
-                            Val = "1"
+                            Val = "2"
                         }),
                     new Text(text)
                     {
