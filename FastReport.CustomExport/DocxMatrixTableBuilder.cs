@@ -251,12 +251,14 @@ internal static class DocxMatrixTableBuilder
 
     private static TableCell CreateContinuationCell(DocxMatrixPage page, DocxMatrixFragment continuation)
     {
+        DocxMatrixObject source = page.Objects[continuation.ObjectIndex];
         TableCell cell = new();
         TableCellProperties properties = CreateCellProperties(page, continuation.Column, continuation.ColumnSpan);
         if (continuation.ColumnSpan > 1)
             properties.Append(new GridSpan { Val = continuation.ColumnSpan });
 
         properties.Append(new VerticalMerge());
+        ApplyStyle(properties, source.Style);
         cell.Append(properties);
         cell.Append(new Paragraph());
         return cell;
