@@ -1,14 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <PackageId>FastReport.CustomExport</PackageId>
+    <Version>0.1.1-local</Version>
+    <Authors>Mindsoft</Authors>
+    <Description>Custom DOCX export implementation for FastReport.</Description>
+    <PackageOutputPath>..\.artifacts\packages</PackageOutputPath>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="DocumentFormat.OpenXml" Version="3.3.0" />
-    <ProjectReference Include="..\..\FastReport.OpenSource\FastReport.OpenSource.csproj" />
+    <PackageReference Include="FastReport.OpenSource" Version="2026.1.2" />
+    <PackageReference Include="System.Drawing.Common" Version="8.0.28" />
   </ItemGroup>
 
 </Project>

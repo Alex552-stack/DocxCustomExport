@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="FastReport.CustomExport.Tests/FastReport.CustomExport.Tests.csproj" />
+  <Project Path="FastReport.CustomExport/FastReport.CustomExport.csproj" />
+</Solution>

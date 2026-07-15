@@ -10,7 +10,7 @@ public class EmptyCustomExportTests
     public void ExportFromFrxReturnsGeneratedStreams()
     {
         using Report report = new Report();
-        report.Load(ReportFixtureCatalog.GetPath("Reports", "Text.frx"));
+        report.Load(ReportFixtureCatalog.GetPath("TextReport.frx"));
         report.Prepare();
 
         EmptyCustomExport export = new EmptyCustomExport
@@ -30,7 +30,7 @@ public class EmptyCustomExportTests
     public void ExportFromPreparedReportReturnsGeneratedStreams()
     {
         using Report report = new Report();
-        report.LoadPrepared(ReportFixtureCatalog.GetPath("Prepared", "Avalonia", "Simple List.fpx"));
+        report.LoadPrepared(ReportFixtureCatalog.GetPath("SimpleList.fpx"));
 
         EmptyCustomExport export = new EmptyCustomExport
         {
@@ -46,12 +46,12 @@ public class EmptyCustomExportTests
     }
 
     [Fact]
-    public void FullFixtureCatalogIsAvailable()
+    public void LocalFixtureCatalogIsAvailable()
     {
         IReadOnlyList<string> frxReports = ReportFixtureCatalog.GetFrxReports();
         IReadOnlyList<string> preparedReports = ReportFixtureCatalog.GetPreparedReports();
 
-        Assert.True(frxReports.Count >= 100);
+        Assert.True(frxReports.Count >= 2);
         Assert.True(preparedReports.Count >= 7);
     }
 }

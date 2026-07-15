@@ -13,8 +13,8 @@ public class ExtractionHelpersTests
         PreparedReportFixtureInfo fixture = new PreparedReportFixtureInfo
         {
             Kind = ReportFixtureKind.Frx,
-            Name = "Text.frx",
-            Path = ReportFixtureCatalog.GetPath("Reports", "Text.frx")
+            Name = "TextReport.frx",
+            Path = ReportFixtureCatalog.GetPath("TextReport.frx")
         };
 
         using Report report = PreparedReportLoader.LoadPreparedReport(fixture);

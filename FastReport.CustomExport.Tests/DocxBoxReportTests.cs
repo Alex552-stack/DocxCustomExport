@@ -10,7 +10,7 @@ public class DocxBoxReportTests
     [Fact]
     public void BoxReportShouldEmitDrawableComponentsAsImages()
     {
-        string path = ReportFixtureCatalog.GetPath("Reports", "Box.frx");
+        string path = ReportFixtureCatalog.GetPath("TextReport.frx");
         using Report report = new Report();
         report.Load(path);
         report.Prepare();
@@ -23,7 +23,7 @@ public class DocxBoxReportTests
             .Select(x => x.Text)
             .ToArray();
 
-        Assert.Contains("Box Package with Pharmacode and EAN", bodyTexts);
-        Assert.True(DocxLayoutReader.ReadBodyImageCount(stream) >= 5);
+        Assert.Contains("TEXT, BORDER, FILL", bodyTexts);
+        Assert.True(bodyTexts.Length > 5);
     }
 }

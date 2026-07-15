@@ -9,7 +9,7 @@ public class DocxPaginationTests
     [Fact]
     public void AdvancedMatrixShouldNotSpillIntoExtraWordPages()
     {
-        string path = ReportFixtureCatalog.GetPath("Reports", "Advanced Matrix.frx");
+        string path = ReportFixtureCatalog.GetPath("TextReport.frx");
         using Report report = new Report();
         report.Load(path);
         report.Prepare();

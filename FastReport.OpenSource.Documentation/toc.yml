@@ -1,7 +1,0 @@
-# - name: Articles
-#   href: articles/
-- name: Word2007Export Architecture
-  href: articles/word2007export-architecture.md
-- name: FastReport Open Source Class Reference
-  href: api/
-  homepage: api/FastReport.html
